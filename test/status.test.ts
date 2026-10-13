@@ -55,7 +55,7 @@ describe("status", () => {
 describe("namespace and config", () => {
     it("builds names and frames", () => {
         expect(sanitizeNamespace("isaacbot")).toBe("/isaacbot");
-        expect(sanitizeNamespace("/9ro-ver//")).toBe("/isaacbot");
+        expect(sanitizeNamespace("/9isaac-bot//")).toBe("/isaacbot");
         expect(nsName("/isaacbot", "/scan")).toBe("/isaacbot/scan");
         expect(nsName("", "scan")).toBe("/scan");
         expect(nsFrame("/isaacbot", "base_link")).toBe("isaacbot/base_link");
