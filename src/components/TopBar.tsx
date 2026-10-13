@@ -1,0 +1,224 @@
+// Copyright 2026 Mechatronics Academy
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import { type ReactNode, useRef, useState } from "react";
+import {
+    Activity,
+    Battery,
+    Bot,
+    BatteryCharging,
+    BatteryWarning,
+    CircuitBoard,
+    Crosshair,
+    Gamepad2,
+    Hand,
+    OctagonX,
+    ShieldAlert,
+    ShieldCheck,
+    Wifi,
+    WifiOff,
+} from "lucide-react";
+
+import { useApp } from "../AppContext";
+import { useAuxIo } from "../hooks/useAuxIo";
+import { useDiagnostics } from "../hooks/useDiagnostics";
+import { useDriveMode } from "../hooks/useDriveMode";
+import { useLink } from "../hooks/useLink";
+import { useNow, useTopic } from "../hooks/useTopic";
+import { DRIVE_MODE, DRIVE_MODE_DETAIL, DRIVE_MODE_LABEL, guardStatus } from "../lib/driveMode";
+import type { Quality } from "../lib/locQuality";
+import { nsName } from "../lib/namespace";
+import { batteryPercent, type Level, type SafetySummary, worstDiagnosticLevel } from "../lib/status";
+import { useRos } from "../ros/RosProvider";
+import { AuxIoModal } from "./AuxIoModal";
+import { DiagnosticsModal } from "./diagnostics/DiagnosticsModal";
+import { TriggerButton } from "./TriggerButton";
+
+const STALE_MS = 3000;
+const ICON = 18;
+
+const fresh = (receivedAt: number | null, now: number) => receivedAt !== null && now - receivedAt < STALE_MS;
+
+export const Pill = ({ level, icon, label, value, title, onClick, buttonRef, expanded, children }: {
+    level: Level;
+    icon: ReactNode;
+    label: string;
+    value: ReactNode;
+    title?: string;
+    /** When given, the pill becomes a button that opens a dialog. */
+    onClick?: () => void;
+    buttonRef?: React.Ref<HTMLButtonElement>;
+    expanded?: boolean;
+    children?: ReactNode;
+}) => {
+    const inner = (
+        <>
+            <span className="pill-icon">{icon}</span>
+            <span className="pill-text">
+                <span className="pill-label">{label}</span>
+                <span className="pill-value">{value}</span>
+            </span>
+            {children}
+        </>
+    );
+
+    if (!onClick) return <div className={`pill pill-${level}`} title={title}>{inner}</div>;
+
+    return (
+        <button
+            type="button"
+            ref={buttonRef}
+            className={`pill pill-${level} pill-clickable`}
+            title={title}
+            onClick={onClick}
+            aria-haspopup="dialog"
+            aria-expanded={expanded}
+        >
+            {inner}
+        </button>
+    );
+};
+
+export interface LocalizationStatus {
+    /** Mode label from isaacbot_amr_indoor_nav_manager ("Localized · lab", "Mapping", ...), if running. */
+    mode: string | null;
+    modeLevel: Level;
+    modeDetail?: string;
+    /** Scan-to-map quality; null while not localizing on a saved map. */
+    quality: Quality | null;
+}
+
+const QUALITY_LEVEL: Record<Quality["level"], Level> = { good: "ok", fair: "warn", poor: "error", unknown: "unknown" };
+
+export const TopBar = ({ localization, safety: safetySummary }: { localization: LocalizationStatus; safety: SafetySummary }) => {
+    const { config, armed } = useApp();
+    const driveMode = useDriveMode();
+    const { connected } = useRos();
+    const ns = config.namespace;
+    const now = useNow(1000);
+    const link = useLink();
+    const latency = link.latency;
+    const diag = useDiagnostics();
+    const [diagOpen, setDiagOpen] = useState(false);
+    const diagPill = useRef<HTMLButtonElement>(null);
+    const aux = useAuxIo();
+    const [auxOpen, setAuxOpen] = useState(false);
+    const auxPill = useRef<HTMLButtonElement>(null);
+
+    const battery = useTopic<{ percentage: number; voltage: number }>(
+        nsName(ns, "battery/battery_status"), "sensor_msgs/msg/BatteryState", 1000);
+    const charging = useTopic<{ charging: boolean }>(
+        nsName(ns, "battery/charging_status"), "isaacbot_amr_msgs/msg/ChargingStatus", 1000);
+    const pct = fresh(battery.receivedAt, now) ? batteryPercent(battery.message?.percentage) : null;
+    const isCharging = Boolean(fresh(charging.receivedAt, now) && charging.message?.charging);
+    const batteryLevel: Level = pct === null ? "unknown" : pct < 15 ? "error" : pct < 30 ? "warn" : "ok";
+    const BatteryIcon = isCharging ? BatteryCharging : batteryLevel === "error" ? BatteryWarning : Battery;
+
+    const diagLevel: Level = fresh(diag.receivedAt, now)
+        ? worstDiagnosticLevel(diag.latestStatuses)
+        : "unknown";
+    const diagText: Record<Level, string> = { ok: "OK", warn: "Warning", error: "Error", stale: "Stale", unknown: "—" };
+
+    const linkLevel: Level = !connected ? "error" : link.slow ? "warn" : latency === null ? "unknown" : latency > 400 ? "warn" : "ok";
+    const q = localization.quality;
+
+    return (
+        <>
+        <header className="topbar">
+            <div className="brand">
+                <img className="brand-logo" src="logo.png" alt="Mechatronics Academy" />
+                <div className="brand-text">
+                    <span className="brand-name">{config.robotName}</span>
+                    <span className="brand-sub">Drive interface</span>
+                </div>
+                <span className={`mode-badge ${driveMode.mode === DRIVE_MODE.MANUAL ? "manual" : ""}`}
+                    title={driveMode.mode === null
+                        ? "Driving mode unknown - isaacbot_amr_drive_mode is not running"
+                        : [
+                            DRIVE_MODE_DETAIL[driveMode.mode],
+                            guardStatus(driveMode.message).detail,
+                            armed ? "This browser's joystick is on." : "This browser's joystick is off.",
+                        ].join("\n")}>
+                    {driveMode.mode === DRIVE_MODE.MANUAL ? <Hand size={14} />
+                        : driveMode.mode === DRIVE_MODE.AUTOMATIC ? <Bot size={14} />
+                            : driveMode.mode === DRIVE_MODE.ASSISTED ? <ShieldCheck size={14} /> : <Gamepad2 size={14} />}
+                    {driveMode.mode === null ? "MODE ?" : DRIVE_MODE_LABEL[driveMode.mode].toUpperCase()}
+                </span>
+            </div>
+
+            <div className="topbar-right">
+            <div className="status-strip">
+                {localization.mode !== null && (
+                    <Pill
+                        level={q ? QUALITY_LEVEL[q.level] : localization.modeLevel}
+                        icon={<Crosshair size={ICON} />}
+                        label="Localization"
+                        value={q ? `${q.label}${q.percent !== null ? ` · ${q.percent}%` : ""}` : localization.mode}
+                        title={[localization.mode, q?.detail, localization.modeDetail].filter(Boolean).join("\n")}
+                    />
+                )}
+                <Pill
+                    level={connected ? safetySummary.level : "unknown"}
+                    icon={safetySummary.level === "ok" ? <ShieldCheck size={ICON} /> : <ShieldAlert size={ICON} />}
+                    label="Safety"
+                    value={connected ? safetySummary.label : "—"}
+                    title={safetySummary.detail}
+                />
+                <Pill level={diagLevel} icon={<Activity size={ICON} />} label="Diagnostics" value={diagText[diagLevel]}
+                    title="Worst level in diagnostics_agg - click for details"
+                    onClick={() => setDiagOpen(true)} buttonRef={diagPill} expanded={diagOpen} />
+                <Pill level={aux.level} icon={<CircuitBoard size={ICON} />} label="Aux IO" value={aux.value}
+                    title={`${aux.detail} - click to switch outputs`}
+                    onClick={() => setAuxOpen(true)} buttonRef={auxPill} expanded={auxOpen} />
+                <Pill
+                    level={batteryLevel}
+                    icon={<BatteryIcon size={ICON} />}
+                    label={isCharging ? "Charging" : "Battery"}
+                    value={pct === null ? "—" : `${pct}%`}
+                    title={battery.message ? `${battery.message.voltage?.toFixed(1)} V` : "No battery_status"}
+                >
+                    {pct !== null && <span className="battery-bar"><span className="battery-fill" style={{ width: `${pct}%` }} /></span>}
+                </Pill>
+                <Pill
+                    level={linkLevel}
+                    icon={connected ? <Wifi size={ICON} /> : <WifiOff size={ICON} />}
+                    label="Link"
+                    value={!connected ? "Offline" : link.slow ? "Slow" : latency === null ? "—" : `${latency} ms`}
+                    title={[
+                        "Round trip to the isaacbot through foxglove_bridge",
+                        link.slow ? "Replies are not getting through in time: the link cannot keep up with the map data." : "",
+                        link.paused ? "Scan and costmap overlay paused to free the link." : "",
+                    ].filter(Boolean).join("\n")}
+                />
+            </div>
+            {/* On every tab, outside the scrolling strip: a stop must never be one tab away. */}
+            <TriggerButton
+                service={nsName(ns, "hardware_interface/sw_user_e_stop_set")}
+                label="E-STOP"
+                icon={<OctagonX size={18} />}
+                className="btn btn-estop-top"
+                disabled={!connected}
+                title="Software e-stop: cuts the motor contactor (no confirmation)"
+            />
+            </div>
+        </header>
+        {diagOpen && (
+            <DiagnosticsModal onClose={() => { setDiagOpen(false); diagPill.current?.focus() }} />
+        )}
+        {auxOpen && (
+            <AuxIoModal aux={aux} onClose={() => { setAuxOpen(false); auxPill.current?.focus() }} />
+        )}
+        </>
+    );
+};

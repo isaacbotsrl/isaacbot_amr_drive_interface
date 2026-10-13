@@ -1,0 +1,186 @@
+// Copyright 2026 Mechatronics Academy
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import { Building2, Circle, Map as MapIcon, Ruler, Save, Search, Trash2, Upload } from "lucide-react";
+import { useState } from "react";
+
+import type { IndoorNav } from "../hooks/useIndoorNav";
+import type { Pose2D } from "../lib/geometry";
+import { formatMapSummary, type MapSummary } from "../lib/occupancyGrid";
+import { LOCALIZATION_LABEL, LOCALIZATION_MODE } from "../lib/rosTypes";
+import type { Level } from "../lib/status";
+import { MAP_NAME } from "../lib/workflow";
+import { StatusChip } from "./StatusChip";
+
+const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
+const modeLevel = (mode: number | undefined): Level =>
+    mode === LOCALIZATION_MODE.LOCALIZATION ? "ok"
+        : mode === LOCALIZATION_MODE.MAPPING ? "warn"
+            : mode === LOCALIZATION_MODE.SWITCHING ? "stale" : "error";
+
+/** Maps: record a new one with SLAM, save it, load a saved one for AMCL, delete. */
+export const FacilityPanel = ({ indoor, mapInfo }: {
+    indoor: IndoorNav;
+    robotPose: Pose2D | null;
+    /** The map currently shown: while mapping, slam_toolbox grows it as scans are added. */
+    mapInfo: MapSummary | null;
+}) => {
+    const [name, setName] = useState("");
+    const [busy, setBusy] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [info, setInfo] = useState<string | null>(null);
+    const mode = indoor.state?.mode;
+    const mapping = mode === LOCALIZATION_MODE.MAPPING;
+    const switching = mode === LOCALIZATION_MODE.SWITCHING;
+
+    const run = async (fn: () => Promise<{ message: string }>) => {
+        setBusy(true);
+        setError(null);
+        setInfo(null);
+        try {
+            setInfo((await fn()).message);
+        } catch (e) {
+            setError(errorText(e));
+        } finally {
+            setBusy(false);
+        }
+    };
+
+    if (!indoor.available) {
+        return (
+            <section className="card">
+                <div className="card-head"><h3 className="card-title"><Building2 size={15} />Facility</h3></div>
+                <p className="hint">
+                    Mapping and saved maps need isaacbot_amr_indoor_nav_manager: set ISAACBOT_AMR_ORCH_LOCALIZATION_SOURCE=indoor
+                    (and ISAACBOT_AMR_ORCH_NAVIGATION=true) on the orchestrator.
+                </p>
+            </section>
+        );
+    }
+
+    const nameValid = MAP_NAME.test(name);
+    const maps = indoor.maps?.maps ?? [];
+
+    return (
+        <section className="card">
+            <div className="card-head"><h3 className="card-title"><Building2 size={15} />Facility</h3></div>
+            <div className="nav-status">
+                <StatusChip level={modeLevel(mode)} label={LOCALIZATION_LABEL[mode ?? 0]} />
+                {indoor.state?.map_name && <span className="muted">{indoor.state.map_name}</span>}
+            </div>
+            {indoor.state?.message && <p className="hint">{indoor.state.message}</p>}
+            {mapInfo && (mapping || mode === LOCALIZATION_MODE.LOCALIZATION) && (
+                <p className="hint map-size" title={mapping
+                    ? "slam_toolbox fits the map to the lidar hits so far; it grows once the isaacbot moves 0.2 m or turns 0.1 rad"
+                    : "Size of the loaded map"}>
+                    <Ruler size={14} />Map {formatMapSummary(mapInfo)}
+                </p>
+            )}
+
+            {mapping ? (
+                <>
+                    <p className="hint rec"><span className="rec-dot" /> REC: drive the isaacbot to cover the area - with the joystick on the map (Manual), the Drive tab or the RC transmitter.</p>
+                    <div className="inline-form">
+                        <input
+                            className="text-input"
+                            placeholder="Map name (letters, digits, _ -)"
+                            value={name}
+                            maxLength={64}
+                            onChange={(e) => setName(e.target.value)}
+                        />
+                        <button className="btn btn-primary" disabled={!nameValid || busy} onClick={() => run(() => indoor.saveMap(name))}>
+                            <Save size={15} />Save map
+                        </button>
+                    </div>
+                    {name && !nameValid && <p className="hint error-text">Use 1–64 letters, digits, “_” or “-”.</p>}
+                </>
+            ) : (
+                <button
+                    className="btn btn-wide"
+                    disabled={busy || switching}
+                    onClick={() => window.confirm("Start a new map? Localization on the current map stops until you load a map again.")
+                        && run(() => indoor.startMapping())}
+                >
+                    <Circle size={14} fill="currentColor" className="error-text" />Start mapping
+                </button>
+            )}
+
+            <h3 className="card-title subhead"><MapIcon size={15} />Saved maps</h3>
+            {maps.length === 0 && <p className="hint">No saved maps yet.</p>}
+            <ul className="place-list">
+                {maps.map((m) => {
+                    const active = mode === LOCALIZATION_MODE.LOCALIZATION && indoor.state?.map_name === m.name;
+                    const justSaved = mapping && indoor.state?.map_name === m.name;
+                    return (
+                        <li key={m.name} className={active ? "place-highlighted" : ""}>
+                            <span className="place-name" title={`${m.width}×${m.height} @ ${m.resolution.toFixed(2)} m`}>
+                                {m.name}
+                                <span className="muted small">
+                                    {" "}{(m.width * m.resolution).toFixed(0)}×{(m.height * m.resolution).toFixed(0)} m
+                                    {m.saved.sec ? ` · ${new Date(m.saved.sec * 1000).toLocaleDateString()}` : ""}
+                                </span>
+                            </span>
+                            <span className="place-actions">
+                                {active ? (
+                                    <span className="chip chip-ok">in use</span>
+                                ) : (
+                                    <button
+                                        className="btn btn-small btn-primary"
+                                        disabled={busy || switching}
+                                        title={justSaved ? "Switch to AMCL; the isaacbot keeps its SLAM pose" : "Localize on this map at the last known pose (use Set pose if the isaacbot was moved)"}
+                                        onClick={() => run(() => indoor.loadMap(m.name))}
+                                    >
+                                        <Upload size={13} />Load
+                                    </button>
+                                )}
+                                {!active && (
+                                    <button
+                                        className="btn btn-small"
+                                        disabled={busy}
+                                        onClick={() => window.confirm(`Delete map “${m.name}” and its places?`) && run(() => indoor.deleteMap(m.name))}
+                                    >
+                                        <Trash2 size={13} />
+                                    </button>
+                                )}
+                            </span>
+                        </li>
+                    );
+                })}
+            </ul>
+            {mode === LOCALIZATION_MODE.LOCALIZATION && (
+                <>
+                    <h3 className="card-title subhead"><Search size={15} />Lost?</h3>
+                    <p className="hint">
+                        If the isaacbot's outline does not match the walls, use “Set pose” on the map. If you don't
+                        know where it is (moved while off), let AMCL search the whole map:
+                    </p>
+                    <button
+                        className="btn btn-wide"
+                        disabled={busy}
+                        onClick={() => window.confirm(
+                            "Search the whole map for the isaacbot? Its current position estimate is discarded. "
+                            + "Afterwards drive a few metres slowly in Manual and check the outline matches the walls - "
+                            + "in corridors or repeated bays it can pick a look-alike spot; use Set pose then.")
+                            && run(() => indoor.findMe())}
+                    >
+                        <Search size={15} />Find me
+                    </button>
+                </>
+            )}
+            {info && <p className="hint">{info}</p>}
+            {error && <p className="hint error-text">{error}</p>}
+        </section>
+    );
+};
