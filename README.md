@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="icons/Logo-Arm-WhiteOrange-372x372-1.png" alt="Mechatronics Academy" width="140">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="icons/isaacbot-lockup-white-bold.svg">
+    <img src="icons/isaacbot-lockup-black-bold.svg" alt="IsaacBot" width="240">
+  </picture>
 </p>
 
 # isaacbot_amr_drive_interface
@@ -155,8 +158,9 @@ test/             # vitest
 
 ## Branding
 
-The Mechatronics Academy logo (`public/logo.png`, from `icons/LogoMATransparentRound-80x80-1.png`)
-is used in the top bar and as the favicon. The accent colour `#fca800` was sampled from it.
+The IsaacBot app icon (`public/logo.png`, 128 px from the company branding's `isaacbot-app-icon.png`)
+is used in the top bar and as the favicon. The accent colour `#fca800` was sampled from the former
+Mechatronics Academy logo.
 Icons come from [lucide-react](https://lucide.dev) (ISC).
 
 ## License

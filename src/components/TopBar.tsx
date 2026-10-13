@@ -137,7 +137,7 @@ export const TopBar = ({ localization, safety: safetySummary }: { localization: 
         <>
         <header className="topbar">
             <div className="brand">
-                <img className="brand-logo" src="logo.png" alt="Mechatronics Academy" />
+                <img className="brand-logo" src="logo.png" alt="IsaacBot" />
                 <div className="brand-text">
                     <span className="brand-name">{config.robotName}</span>
                     <span className="brand-sub">Drive interface</span>

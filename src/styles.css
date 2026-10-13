@@ -27,7 +27,7 @@
     --text: #e8edf3;
     --muted: #8a96a6;
     --faint: #5c6878;
-    --accent: #fca800;          /* Mechatronics Academy orange (sampled from the logo) */
+    --accent: #fca800;          /* Mechatronics Academy orange (sampled from the former logo) */
     --accent-strong: #ffb91f;
     --accent-ink: #1b1300;
     --accent-soft: rgba(252, 168, 0, 0.14);
@@ -60,7 +60,7 @@ svg { flex-shrink: 0; }
     border-bottom: 1px solid var(--border);
 }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.brand-logo { width: 38px; height: 38px; border-radius: 50%; box-shadow: 0 0 0 2px rgba(252, 168, 0, 0.35); }
+.brand-logo { width: 38px; height: 38px; border-radius: 22%; box-shadow: 0 0 0 1px var(--border-strong); }
 .brand-text { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
 .brand-name { font-weight: 700; font-size: 15px; letter-spacing: 0.01em; white-space: nowrap; }
 .brand-sub { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
