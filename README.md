@@ -1,6 +1,6 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="icons/isaacbot-lockup-white-bold.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="icons/isaacbot-lockup-white.svg">
     <img src="icons/isaacbot-lockup-black-bold.svg" alt="IsaacBot" width="240">
   </picture>
 </p>
@@ -158,8 +158,9 @@ test/             # vitest
 
 ## Branding
 
-The IsaacBot app icon (`public/logo.png`, 128 px from the company branding's `isaacbot-app-icon.png`)
-is used in the top bar and as the favicon. The accent colour `#fca800` was sampled from the former
+The official IsaacBot brand files live in `icons/` (copied from the company branding). The white mark
+(`public/isaacbot-mark-white.svg`) is used in the top bar; the favicon is the black or white mark,
+following the browser's colour scheme. The accent colour `#fca800` was sampled from the former
 Mechatronics Academy logo.
 Icons come from [lucide-react](https://lucide.dev) (ISC).
 

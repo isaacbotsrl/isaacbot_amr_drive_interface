@@ -60,7 +60,7 @@ svg { flex-shrink: 0; }
     border-bottom: 1px solid var(--border);
 }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.brand-logo { width: 38px; height: 38px; border-radius: 22%; box-shadow: 0 0 0 1px var(--border-strong); }
+.brand-logo { height: 34px; width: auto; }
 .brand-text { display: flex; flex-direction: column; line-height: 1.15; min-width: 0; }
 .brand-name { font-weight: 700; font-size: 15px; letter-spacing: 0.01em; white-space: nowrap; }
 .brand-sub { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
