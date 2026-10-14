@@ -3,7 +3,7 @@
  * https://github.com/tier4/roslibjs-foxglove under the Apache License 2.0.
  *
  * Modifications made by Hilary Luo 2025.
- * Modified 2026 by Mechatronics Academy for isaacbot_amr_drive_interface; the changes are listed in
+ * Modified 2026 by IsaacBot for isaacbot_amr_drive_interface; the changes are listed in
  * NOTICE.md next to this file.
  *
  * Copyright (C) 2025 Clearpath Robotics, Inc., a Rockwell Automation Company. All rights reserved.

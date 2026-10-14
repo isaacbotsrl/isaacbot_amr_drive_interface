@@ -1,6 +1,6 @@
 {
   "namespace": "isaacbot",
-  "robotName": "rover-a1",
+  "robotName": "ardennes",
   "maxLinear": 1.0,
   "maxAngular": 1.0,
   "maxRimSpeed": 1.7,

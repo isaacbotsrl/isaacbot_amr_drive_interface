@@ -1,5 +1,5 @@
 /*
- * Copyright 2026 Mechatronics Academy
+ * Copyright 2026 IsaacBot
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/* Isaacbot drive interface - Mechatronics Academy look: dark slate surfaces, brand orange accent. */
+/* Isaacbot drive interface - IsaacBot look: dark slate surfaces, brand orange accent. */
 :root {
     color-scheme: dark;
     --bg: #0d1117;
@@ -27,7 +27,7 @@
     --text: #e8edf3;
     --muted: #8a96a6;
     --faint: #5c6878;
-    --accent: #fca800;          /* Mechatronics Academy orange (sampled from the former logo) */
+    --accent: #fca800;          /* IsaacBot orange (sampled from the former logo) */
     --accent-strong: #ffb91f;
     --accent-ink: #1b1300;
     --accent-soft: rgba(252, 168, 0, 0.14);

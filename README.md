@@ -13,13 +13,13 @@ the Clearpath IndoorNav web GUI. It covers one isaacbot and indoor (2D map) navi
 The page is a static React + TypeScript app. It talks ROS 2 through
 [foxglove_bridge](https://github.com/foxglove/ros-foxglove-bridge) using the Foxglove
 websocket protocol, so the container that serves it runs no ROS. On the isaacbot it ships as the
-balena service **`rover-a1-drive-interface`** (see `rover_docker/rover_a1_drive_interface/`
+balena service **`ardennes-drive-interface`** (see `rover_docker/ardennes_drive_interface/`
 in the ardennes workspace):
 - nginx on port **5000**, behind a basic-auth login;
 - the same-origin **`/ws`** endpoint proxied to foxglove_bridge on `127.0.0.1:8765`.
 
 ```
-browser ──http/ws :5000──► nginx (rover-a1-drive-interface) ──ws──► foxglove_bridge :8765 (rover-a1-platform) ──► ROS 2
+browser ──http/ws :5000──► nginx (ardennes-drive-interface) ──ws──► foxglove_bridge :8765 (ardennes-platform) ──► ROS 2
 ```
 
 ## Features
@@ -161,7 +161,7 @@ test/             # vitest
 The official IsaacBot brand files live in `icons/` (copied from the company branding). The white mark
 (`public/isaacbot-mark-white.svg`) is used in the top bar; the favicon is the black or white mark,
 following the browser's colour scheme. The accent colour `#fca800` was sampled from the former
-Mechatronics Academy logo.
+IsaacBot logo.
 Icons come from [lucide-react](https://lucide.dev) (ISC).
 
 ## License

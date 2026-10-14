@@ -2,7 +2,7 @@
  * Portions of this file are ported from Cockpit ROS 2 Diagnostics (see below).
  *
  * Copyright (C) 2025 Clearpath Robotics, Inc., a Rockwell Automation Company. All rights reserved.
- * Modified 2026 by Mechatronics Academy: ported into isaacbot_amr_drive_interface and changed as
+ * Modified 2026 by IsaacBot: ported into isaacbot_amr_drive_interface and changed as
  * described below.
  *
  * This file is free software; you can redistribute it and/or modify it
