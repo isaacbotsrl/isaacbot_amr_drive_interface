@@ -83,7 +83,8 @@ export const PlacesPanel = ({ indoor, robotPose, onGo, highlighted, setHighlight
             <section className="card">
                 <div className="card-head"><h3 className="card-title"><MapPinned size={15} />Places</h3></div>
                 <p className="hint">
-                    Places need isaacbot_amr_indoor_nav_manager (ISAACBOT_AMR_ORCH_LOCALIZATION_SOURCE=indoor on the orchestrator).
+                    Places need isaacbot_amr_indoor_nav_manager, which runs with navigation
+                    (ISAACBOT_AMR_ORCH_NAVIGATION=true on the orchestrator).
                 </p>
             </section>
         );

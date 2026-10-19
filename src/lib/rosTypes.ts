@@ -81,14 +81,22 @@ export interface PlaceMsg { id: string; name: string; map_name: string; x: numbe
 export interface PlaceList { map_name: string; places: PlaceMsg[] }
 export interface MapInfo { name: string; resolution: number; width: number; height: number; saved: Time }
 export interface MapList { maps: MapInfo[]; active_map: string }
-export interface LocalizationStateMsg { mode: number; map_name: string; message: string }
+export interface LocalizationStateMsg { mode: number; map_name: string; message: string; scan_source?: number }
 
-export const LOCALIZATION_MODE = { UNAVAILABLE: 0, MAPPING: 1, LOCALIZATION: 2, SWITCHING: 3 } as const;
+/** ODOMETRY: no lidar or camera works, map -> odom is held and the isaacbot dead-reckons. */
+export const LOCALIZATION_MODE = { UNAVAILABLE: 0, MAPPING: 1, LOCALIZATION: 2, SWITCHING: 3, ODOMETRY: 4 } as const;
 export const LOCALIZATION_LABEL: Record<number, string> = {
     0: "No localization",
     1: "Mapping",
     2: "Localized",
     3: "Switching…",
+    4: "Odometry only",
+};
+/** Which range sensor feeds SLAM/AMCL (LocalizationState scan_source). */
+export const SCAN_SOURCE_LABEL: Record<number, string> = {
+    0: "no lidar or camera",
+    1: "lidar",
+    2: "camera",
 };
 
 export interface Result { success: boolean; message: string }

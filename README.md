@@ -90,7 +90,9 @@ browser ──http/ws :5000──► nginx (ardennes-drive-interface) ──ws�
   - an **A → B → C workflow**, run as one mission.
 - **Facility.** **Start mapping** (slam_toolbox), **Save map**, and **Load** a saved map
   (map_server + AMCL, switched at runtime) or delete one.
-  Needs `ISAACBOT_AMR_ORCH_LOCALIZATION_SOURCE=indoor` on the orchestrator.
+  Needs isaacbot_amr_indoor_nav_manager, which runs with `ISAACBOT_AMR_ORCH_NAVIGATION=true` on
+  the orchestrator. With no lidar or camera working it shows **Odometry only**: Start mapping and
+  Load are refused there, Save map still works for a paused mapping session.
 - **Localization quality.** A Boxer-style Good / Fair / Poor indicator in the top bar. It combines:
   - the share of lidar points that land on a wall of the saved map (scan-to-map match);
   - AMCL's reported uncertainty (`amcl_pose` covariance).
@@ -103,7 +105,7 @@ browser ──http/ws :5000──► nginx (ardennes-drive-interface) ──ws�
   - aux IO: how many aux outputs are on - click it for the Aux IO popup;
   - battery and charging;
   - link latency (round trip through `/rosapi/get_time`);
-  - the localization mode.
+  - the localization mode, with the scan source (lidar or camera) in its detail.
 
 - **Diagnostics popup.** Clicking the top bar's diagnostics level opens the same view as
   Cockpit's **ROS 2 Diagnostics** page, over the same `<ns>/diagnostics_agg` topic:

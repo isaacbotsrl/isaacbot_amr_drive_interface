@@ -27,7 +27,7 @@ const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 const modeLevel = (mode: number | undefined): Level =>
     mode === LOCALIZATION_MODE.LOCALIZATION ? "ok"
-        : mode === LOCALIZATION_MODE.MAPPING ? "warn"
+        : mode === LOCALIZATION_MODE.MAPPING || mode === LOCALIZATION_MODE.ODOMETRY ? "warn"
             : mode === LOCALIZATION_MODE.SWITCHING ? "stale" : "error";
 
 /** Maps: record a new one with SLAM, save it, load a saved one for AMCL, delete. */
@@ -63,8 +63,8 @@ export const FacilityPanel = ({ indoor, mapInfo }: {
             <section className="card">
                 <div className="card-head"><h3 className="card-title"><Building2 size={15} />Facility</h3></div>
                 <p className="hint">
-                    Mapping and saved maps need isaacbot_amr_indoor_nav_manager: set ISAACBOT_AMR_ORCH_LOCALIZATION_SOURCE=indoor
-                    (and ISAACBOT_AMR_ORCH_NAVIGATION=true) on the orchestrator.
+                    Mapping and saved maps need isaacbot_amr_indoor_nav_manager, which runs with navigation
+                    (ISAACBOT_AMR_ORCH_NAVIGATION=true on the orchestrator).
                 </p>
             </section>
         );

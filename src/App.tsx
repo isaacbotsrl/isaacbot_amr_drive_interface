@@ -40,7 +40,7 @@ import { goToBlockedReason } from "./lib/driveMode";
 import type { Pose2D } from "./lib/geometry";
 import { type MapSummary, sameMapSummary } from "./lib/occupancyGrid";
 import { nsFrame } from "./lib/namespace";
-import { LOCALIZATION_LABEL, LOCALIZATION_MODE, type PlaceMsg } from "./lib/rosTypes";
+import { LOCALIZATION_LABEL, LOCALIZATION_MODE, SCAN_SOURCE_LABEL, type PlaceMsg } from "./lib/rosTypes";
 import type { Level } from "./lib/status";
 import { sameViewFrame, VIEW_FRAME_MODES, type ViewFrame, type ViewFrameMode } from "./lib/viewFrame";
 import { RosProvider, useRos } from "./ros/RosProvider";
@@ -127,26 +127,32 @@ const Workspace = () => {
     }
     const locMode = indoor.state?.mode;
     if (!indoor.available) {
-        disabledTools.place = disabledTools.place ?? "Places need isaacbot_amr_indoor_nav_manager (indoor mode)";
+        disabledTools.place = disabledTools.place ?? "Places need isaacbot_amr_indoor_nav_manager (navigation on)";
     } else if (locMode !== LOCALIZATION_MODE.LOCALIZATION) {
-        // AMCL only runs on a loaded map; while mapping, SLAM owns the pose.
-        const why = locMode === LOCALIZATION_MODE.MAPPING ? "Not while mapping - load a saved map first" : "Load a map first";
+        // AMCL only runs on a loaded map; while mapping, SLAM owns the pose; on odometry AMCL
+        // gets no scan to check a pose against.
+        const why = locMode === LOCALIZATION_MODE.MAPPING ? "Not while mapping - load a saved map first"
+            : locMode === LOCALIZATION_MODE.ODOMETRY ? "No lidar or camera - waiting for one to localize again"
+                : "Load a map first";
         disabledTools.place = disabledTools.place ?? why;
         disabledTools.setPose = disabledTools.setPose ?? why;
     }
 
-    // Quality only means something while AMCL localizes on a saved map; in the fixed
-    // localization_source:=amcl mode (no indoor manager) it is shown as well.
+    // Quality only means something while AMCL localizes on a saved map; without the manager
+    // (navigation off) it is shown whenever AMCL reports one.
     const localized = indoor.available ? locMode === LOCALIZATION_MODE.LOCALIZATION : true;
     // While mapping, judge the scan against the map slam_toolbox is building (as OTTO does).
     const mapping = indoor.available && locMode === LOCALIZATION_MODE.MAPPING;
     const judged = localized || mapping;
     const { quality, onScanMatch } = useLocalizationQuality(judged && connected, mapping);
     const modeLevel: Level = locMode === LOCALIZATION_MODE.LOCALIZATION ? "ok"
-        : locMode === LOCALIZATION_MODE.MAPPING ? "warn"
+        : locMode === LOCALIZATION_MODE.MAPPING || locMode === LOCALIZATION_MODE.ODOMETRY ? "warn"
             : locMode === LOCALIZATION_MODE.SWITCHING ? "stale" : "error";
+    const scanSource = indoor.state?.scan_source;
+    const scanNote = scanSource !== undefined ? `Scan: ${SCAN_SOURCE_LABEL[scanSource] ?? "?"}` : undefined;
     // Drawing on odometry while nothing localizes: say so instead of a bare "No localization".
-    const odomFallback = odomView && locMode !== LOCALIZATION_MODE.LOCALIZATION && locMode !== LOCALIZATION_MODE.MAPPING;
+    const odomFallback = odomView && locMode !== LOCALIZATION_MODE.LOCALIZATION && locMode !== LOCALIZATION_MODE.MAPPING
+        && locMode !== LOCALIZATION_MODE.ODOMETRY;
     const localization: LocalizationStatus = odomFallback
         ? {
             mode: "Odometry only",
@@ -159,7 +165,7 @@ const Workspace = () => {
                 ? `${LOCALIZATION_LABEL[locMode ?? 0]}${indoor.state?.map_name ? ` · ${indoor.state.map_name}` : ""}`
                 : quality ? "AMCL" : null,
             modeLevel,
-            modeDetail: indoor.state?.message,
+            modeDetail: [indoor.state?.message, scanNote].filter(Boolean).join("\n") || undefined,
             quality: judged ? quality : null,
         };
 
