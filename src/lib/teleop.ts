@@ -67,8 +67,8 @@ export const applyDeadzone = (v: number, deadzone: number): number => {
 /**
  * RC-style expo: (1 - e)·v + e·v³. Small deflections give much less speed, full deflection is
  * still exactly ±1, so fine control improves without losing top speed. Odd, so the sign is
- * kept; e = 0 is linear. On the RC transmitter this lives in the radio (EdgeTX), not in
- * isaacbot_amr_crsf_teleop, so the web UI applies its own.
+ * kept; e = 0 is linear. isaacbot_amr_crsf_teleop applies the same curve to the RC sticks
+ * (linear_x_expo / angular_z_expo), with the radio's own expo kept at 0 %.
  */
 export const applyExpo = (v: number, expo: number): number => {
     const e = clamp(Number.isFinite(expo) ? expo : 0, 0, 1);

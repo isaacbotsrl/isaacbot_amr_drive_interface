@@ -118,9 +118,9 @@ describe("limitRimSpeed", () => {
         const high = { maxLinear: 1.5, maxAngular: 2.1, maxRimSpeed: BUDGET, trackWidth: 2 * HALF_TRACK };
         const out = stickToTwist({ x: 1, y: 1 }, 1.0, high, 0);
         expect(rim(out)).toBeCloseTo(BUDGET, 12);
-        // Today's defaults (1.0 m/s, 1.0 rad/s, 1.0204 m) never reach 1.7 m/s: unchanged.
-        const defaults = { maxLinear: 1.0, maxAngular: 1.0, maxRimSpeed: 1.7, trackWidth: 1.0204 };
-        expect(stickToTwist({ x: 1, y: 1 }, 1.0, defaults, 0)).toEqual({ linear: 1.0, angular: -1.0 });
+        // Today's defaults (1.2 m/s, 1.5 rad/s, 1.0236 m) reach 1.968 m/s, under 1.97: unchanged.
+        const defaults = { maxLinear: 1.2, maxAngular: 1.5, maxRimSpeed: 1.97, trackWidth: 1.0236 };
+        expect(stickToTwist({ x: 1, y: 1 }, 1.0, defaults, 0)).toEqual({ linear: 1.2, angular: -1.5 });
     });
 });
 

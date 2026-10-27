@@ -65,7 +65,7 @@ describe("namespace and config", () => {
     it("parses config with fallbacks", () => {
         const c = parseConfig({ namespace: "isaacbot", maxLinear: -1, robotName: "" });
         expect(c.namespace).toBe("/isaacbot");
-        expect(c.maxLinear).toBe(1.0);
+        expect(c.maxLinear).toBe(1.2);
         expect(c.robotName).toBe("isaacbot");
     });
 });
